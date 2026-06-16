@@ -27,9 +27,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
         release {
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
@@ -45,7 +50,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     // PDF text extraction AND local stamping (mirrors FiscalyzeAny's PdfPig + PdfSharpCore)
-    implementation("com.tom_roush:pdfbox-android:2.0.27.0")
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 
     // QR code generation for local PDF stamp (mirrors FiscalyzeAny's QRCoder)
     implementation("com.google.zxing:core:3.5.3")

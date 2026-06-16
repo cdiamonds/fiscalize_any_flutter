@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 
 data class PrintEvent(
     val documentId: Long,
-    val receiptNumber: Long,
+    val receiptNumber: String,
     val verificationCode: String?,
     val pdfPath: String?,
     val confidenceScore: Int,

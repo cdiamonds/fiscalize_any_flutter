@@ -117,6 +117,10 @@ class FiscalizeVirtualPrinterService : PrintService() {
         return ParcelFileDescriptor.AutoCloseInputStream(pfd).use { it.readBytes() }
     }
 
+    override fun onRequestCancelPrintJob(printJob: PrintJob) {
+        printJob.cancel()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
