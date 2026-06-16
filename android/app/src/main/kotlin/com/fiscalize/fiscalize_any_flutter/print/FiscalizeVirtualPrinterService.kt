@@ -137,7 +137,7 @@ class FiscalizeVirtualPrinterService : PrintService() {
                 .build()
 
             addPrinters(listOf(
-                PrinterInfo.Builder(printerId, "Fiscalize Fiscal Printer", PrinterInfo.STATUS_IDLE)
+                PrinterInfo.Builder(printerId, "Fiscalize Virtual Printer", PrinterInfo.STATUS_IDLE)
                     .setCapabilities(capabilities)
                     .build()
             ))

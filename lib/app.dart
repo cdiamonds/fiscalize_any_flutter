@@ -101,8 +101,8 @@ class _SetupGuidePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final steps = [
       (Icons.settings_rounded, 'Configure credentials', 'Tap Settings → enter your Fiscalize API URL, Device API Key, and Secret.'),
-      (Icons.print_rounded, 'Enable virtual printer', 'Go to Android Settings → Connected Devices → Printing → enable "Fiscalize Fiscal Printer".'),
-      (Icons.picture_as_pdf_rounded, 'Print any invoice', 'From any billing or POS app, tap Print and select "Fiscalize Fiscal Printer".'),
+      (Icons.print_rounded, 'Enable virtual printer', 'Go to Android Settings → Connected Devices → Printing → enable "Fiscalize Virtual Printer".'),
+      (Icons.picture_as_pdf_rounded, 'Print any invoice', 'From any billing or POS app, tap Print and select "Fiscalize Virtual Printer".'),
       (Icons.verified_rounded, 'Fiscal stamp applied', 'The app extracts text, fiscalizes with ZIMRA, stamps the QR code, then saves or prints your document.'),
     ];
 

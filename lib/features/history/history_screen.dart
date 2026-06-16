@@ -90,7 +90,7 @@ class _EmptyState extends StatelessWidget {
             Text('No fiscal documents yet', style: AppTextStyles.heading(context)),
             const SizedBox(height: Spacing.sm),
             Text(
-              'Print an invoice from any Android app\nand select "Fiscalize Fiscal Printer"',
+              'Print an invoice from any Android app\nand select "Fiscalize Virtual Printer"',
               textAlign: TextAlign.center,
               style: AppTextStyles.body(context),
             ),
