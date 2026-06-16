@@ -1,4 +1,4 @@
-package com.fiscalize.fiscalize_any_droid.print
+package com.fiscalize.fiscalize_any_flutter.print
 
 import android.os.ParcelFileDescriptor
 import android.print.PrintAttributes

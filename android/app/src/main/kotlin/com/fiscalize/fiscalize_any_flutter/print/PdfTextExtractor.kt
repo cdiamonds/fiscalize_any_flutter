@@ -1,4 +1,4 @@
-package com.fiscalize.fiscalize_any_droid.print
+package com.fiscalize.fiscalize_any_flutter.print
 
 import android.content.Context
 import android.util.Log

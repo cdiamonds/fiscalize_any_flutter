@@ -1,4 +1,4 @@
-package com.fiscalize.fiscalize_any_droid.print
+package com.fiscalize.fiscalize_any_flutter.print
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,7 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import com.fiscalize.fiscalize_any_droid.MainActivity
+import com.fiscalize.fiscalize_any_flutter.MainActivity
 
 class NotificationHelper(private val context: Context) {
 

@@ -1,4 +1,4 @@
-package com.fiscalize.fiscalize_any_droid.print
+package com.fiscalize.fiscalize_any_flutter.print
 
 import android.util.Log
 import okhttp3.MediaType.Companion.toMediaType

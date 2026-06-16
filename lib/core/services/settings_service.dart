@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-const _channel = MethodChannel('com.fiscalize.anydroid/settings');
+const _channel = MethodChannel('com.fiscalize.anymobile/settings');
 
 class AppSettings {
   String apiUrl;

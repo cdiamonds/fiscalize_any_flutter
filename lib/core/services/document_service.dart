@@ -1,8 +1,8 @@
 import 'package:flutter/services.dart';
 import '../models/fiscal_document.dart';
 
-const _channel = MethodChannel('com.fiscalize.anydroid/documents');
-const _events = EventChannel('com.fiscalize.anydroid/print_events');
+const _channel = MethodChannel('com.fiscalize.anymobile/documents');
+const _events = EventChannel('com.fiscalize.anymobile/print_events');
 
 class DocumentService {
   Future<List<FiscalDocument>> listDocuments() async {

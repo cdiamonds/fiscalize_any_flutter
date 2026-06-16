@@ -2,4 +2,4 @@
 <print-service
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:vendor="Fiscalize"
-    android:settingsActivity="com.fiscalize.fiscalize_any_droid.MainActivity" />
+    android:settingsActivity="com.fiscalize.fiscalize_any_flutter.MainActivity" />

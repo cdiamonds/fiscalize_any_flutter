@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.fiscalize.fiscalize_any_droid"
+    namespace = "com.fiscalize.fiscalize_any_flutter"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.fiscalize.fiscalize_any_droid"
+        applicationId = "com.fiscalize.fiscalize_any_flutter"
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

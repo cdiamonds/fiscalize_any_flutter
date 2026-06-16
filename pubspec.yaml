@@ -1,5 +1,5 @@
-name: fiscalize_any_droid
-description: "FiscalizeAnyDroid — Virtual fiscal printer for Android. Intercepts print jobs, fiscalizes via Fiscalize API, and delivers stamped documents."
+name: fiscalize_any_flutter
+description: "Fiscalize Any Mobile — Virtual fiscal printer for Android. Intercepts print jobs, fiscalizes via Fiscalize API, and delivers stamped documents."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -40,6 +40,9 @@ dependencies:
 
   # Icons
   cupertino_icons: ^1.0.8
+
+  # Typography
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

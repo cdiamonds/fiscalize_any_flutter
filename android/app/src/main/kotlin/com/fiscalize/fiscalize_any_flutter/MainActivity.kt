@@ -1,9 +1,9 @@
-package com.fiscalize.fiscalize_any_droid
+package com.fiscalize.fiscalize_any_flutter
 
 import android.os.Bundle
-import com.fiscalize.fiscalize_any_droid.print.DocumentStore
-import com.fiscalize.fiscalize_any_droid.print.PrintEventBus
-import com.fiscalize.fiscalize_any_droid.print.SettingsStore
+import com.fiscalize.fiscalize_any_flutter.print.DocumentStore
+import com.fiscalize.fiscalize_any_flutter.print.PrintEventBus
+import com.fiscalize.fiscalize_any_flutter.print.SettingsStore
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -76,8 +76,8 @@ class MainActivity : FlutterActivity() {
     }
 
     companion object {
-        private const val CHANNEL_SETTINGS = "com.fiscalize.anydroid/settings"
-        private const val CHANNEL_DOCUMENTS = "com.fiscalize.anydroid/documents"
-        private const val CHANNEL_PRINT_EVENTS = "com.fiscalize.anydroid/print_events"
+        private const val CHANNEL_SETTINGS = "com.fiscalize.anymobile/settings"
+        private const val CHANNEL_DOCUMENTS = "com.fiscalize.anymobile/documents"
+        private const val CHANNEL_PRINT_EVENTS = "com.fiscalize.anymobile/print_events"
     }
 }
