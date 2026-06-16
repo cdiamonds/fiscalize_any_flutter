@@ -1,6 +1,5 @@
 package com.fiscalize.fiscalize_any_droid.print
 
-import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
 import android.print.PrintAttributes
 import android.print.PrinterCapabilitiesInfo
@@ -14,6 +13,7 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -28,6 +28,9 @@ class FiscalizeVirtualPrinterService : PrintService() {
 
     override fun onCreate() {
         super.onCreate()
+        // Initialise PdfBox-Android font resources (required once per process)
+        PdfTextExtractor.init(applicationContext)
+
         settings = SettingsStore(applicationContext)
         apiClient = FiscalizeApiClient(settings)
         printerClient = RealPrinterClient(settings)
@@ -54,25 +57,47 @@ class FiscalizeVirtualPrinterService : PrintService() {
 
         scope.launch {
             try {
+                // ── Step 1: Read raw PDF bytes from the Android print job ──────────
                 val pdfBytes = readPdfBytes(printJob.document)
                 Log.d(TAG, "Read ${pdfBytes.size} bytes from print job")
 
-                val result = apiClient.fiscalizePdf(pdfBytes)
+                // ── Step 2: Extract text locally (mirrors FiscalyzeAny PdfService.ExtractText) ──
+                val printText = PdfTextExtractor.extract(pdfBytes)
+                Log.d(TAG, "Extracted ${printText.length} chars of text")
+
+                // ── Step 3: Send text to server → fiscal data + print position returned ──
+                // Endpoint: POST /api/Documents/Devices/PrintText  { printText: string }
+                // Same endpoint FiscalyzeAny Windows calls in FolderMonitorService.
+                val result = apiClient.sendPrintText(printText)
                 Log.d(TAG, "Fiscalized: receipt #${result.receiptNumber}, confidence ${result.confidenceScore}%")
 
-                val saved = documentStore.save(result, jobName)
+                // ── Step 4: Stamp PDF locally with QR + fiscal lines ──────────────
+                // Mirrors FiscalyzeAny's PdfService.AddFiscalDataToPdf() using
+                // PdfSharpCore + QRCoder. We use PdfBox-Android + ZXing instead.
+                val stampedPdf = PdfStamper.stamp(pdfBytes, result)
+                Log.d(TAG, "PDF stamped (${stampedPdf.size} bytes)")
+
+                // ── Step 5: Persist for history and handle output ─────────────────
+                val saved = documentStore.save(result, jobName, stampedPdf)
 
                 val mode = settings.outputMode
-                if ((mode == SettingsStore.MODE_PRINT_ONLY || mode == SettingsStore.MODE_PRINT_AND_SAVE)
-                    && result.stampedPdf != null
-                ) {
-                    printerClient.print(result.stampedPdf)
+                if (mode == SettingsStore.MODE_PRINT_ONLY || mode == SettingsStore.MODE_PRINT_AND_SAVE) {
+                    printerClient.print(stampedPdf)
                 }
 
                 withContext(Dispatchers.Main) {
                     printJob.complete()
                     notifications.showSuccess(jobName, result)
-                    broadcastJobComplete(result, saved?.pdfFile?.absolutePath)
+                    PrintEventBus.post(
+                        PrintEvent(
+                            documentId = result.documentId,
+                            receiptNumber = result.receiptNumber,
+                            verificationCode = result.verificationCode,
+                            pdfPath = saved?.pdfFile?.absolutePath,
+                            confidenceScore = result.confidenceScore,
+                            warnings = result.warnings
+                        )
+                    )
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Print job failed", e)
@@ -92,23 +117,9 @@ class FiscalizeVirtualPrinterService : PrintService() {
         return ParcelFileDescriptor.AutoCloseInputStream(pfd).use { it.readBytes() }
     }
 
-    private fun broadcastJobComplete(result: FiscalizeResult, pdfPath: String?) {
-        // Signal MainActivity / Flutter EventChannel that a new document is available
-        PrintEventBus.post(
-            PrintEvent(
-                documentId = result.documentId,
-                receiptNumber = result.receiptNumber,
-                verificationCode = result.verificationCode,
-                pdfPath = pdfPath,
-                confidenceScore = result.confidenceScore,
-                warnings = result.warnings
-            )
-        )
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-        scope.coroutineContext[SupervisorJob]?.cancel()
+        scope.cancel()
     }
 
     private inner class FiscalizePrinterDiscoverySession : PrinterDiscoverySession() {
@@ -125,11 +136,11 @@ class FiscalizeVirtualPrinterService : PrintService() {
                 )
                 .build()
 
-            val printer = PrinterInfo.Builder(printerId, "Fiscalize Fiscal Printer", PrinterInfo.STATUS_IDLE)
-                .setCapabilities(capabilities)
-                .build()
-
-            addPrinters(listOf(printer))
+            addPrinters(listOf(
+                PrinterInfo.Builder(printerId, "Fiscalize Fiscal Printer", PrinterInfo.STATUS_IDLE)
+                    .setCapabilities(capabilities)
+                    .build()
+            ))
         }
 
         override fun onStopPrinterDiscovery() {}

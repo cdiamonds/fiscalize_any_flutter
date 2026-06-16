@@ -44,7 +44,12 @@ dependencies {
     // Coroutines for async PrintService processing
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // JSON parsing (no external lib needed — android.org.json is built-in)
+    // PDF text extraction AND local stamping (mirrors FiscalyzeAny's PdfPig + PdfSharpCore)
+    implementation("com.tom_roush:pdfbox-android:2.0.27.0")
+
+    // QR code generation for local PDF stamp (mirrors FiscalyzeAny's QRCoder)
+    implementation("com.google.zxing:core:3.5.3")
+
     // Notifications
     implementation("androidx.core:core-ktx:1.16.0")
 }

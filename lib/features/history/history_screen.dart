@@ -108,7 +108,7 @@ class _DocumentTile extends StatelessWidget {
                     Text(doc.jobName, style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 2),
                     Text(
-                      'Receipt #${doc.receiptNumber}  •  Day ${doc.fiscalDayNumber}',
+                      doc.subtitle,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     Text(

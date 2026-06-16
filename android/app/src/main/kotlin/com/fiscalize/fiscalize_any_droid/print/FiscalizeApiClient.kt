@@ -1,9 +1,7 @@
 package com.fiscalize.fiscalize_any_droid.print
 
-import android.util.Base64
 import android.util.Log
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -18,70 +16,64 @@ class FiscalizeApiClient(private val settings: SettingsStore) {
         .writeTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    fun fiscalizePdf(pdfBytes: ByteArray): FiscalizeResult {
+    /**
+     * Sends the extracted print text to POST /api/Documents/Devices/PrintText.
+     * This mirrors exactly what FiscalyzeAny Windows does in FolderMonitorService.
+     * The server extracts the invoice fields, fiscalizes with ZIMRA, and returns
+     * the fiscal data + print position for local PDF stamping.
+     */
+    fun sendPrintText(printText: String): FiscalizeResult {
         ensureToken()
 
-        val multipart = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart(
-                "file", "document.pdf",
-                pdfBytes.toRequestBody("application/pdf".toMediaType())
-            )
-            .apply {
-                settings.deviceId?.let { addFormDataPart("deviceId", it.toString()) }
-            }
-            .build()
-
+        val body = JSONObject().apply { put("printText", printText) }.toString()
         val request = Request.Builder()
-            .url("${settings.apiUrl}/api/Invoices/FiscalizePdf")
-            .post(multipart)
+            .url("${settings.apiUrl}/api/Documents/Devices/PrintText")
+            .post(body.toRequestBody("application/json".toMediaType()))
             .header("Authorization", "Bearer ${settings.authToken}")
             .build()
 
         val response = http.newCall(request).execute()
 
         if (response.code == 401) {
-            // Token expired — refresh and retry once
             refreshToken()
-            return fiscalizePdf(pdfBytes)
+            return sendPrintText(printText)
         }
 
-        val body = response.body?.string()
-            ?: throw IllegalStateException("Empty response from FiscalizePdf (HTTP ${response.code})")
+        val responseBody = response.body?.string()
+            ?: throw IllegalStateException("Empty response from PrintText (HTTP ${response.code})")
 
         if (!response.isSuccessful) {
-            throw IllegalStateException("FiscalizePdf failed (HTTP ${response.code}): $body")
+            throw IllegalStateException("PrintText failed (HTTP ${response.code}): $responseBody")
         }
 
-        return parseFiscalizeResult(body)
+        Log.d(TAG, "PrintText response received (${responseBody.length} chars)")
+        return parsePrintTextResponse(responseBody)
     }
 
     private fun ensureToken() {
-        if (settings.authToken.isNullOrBlank()) {
-            login()
-        }
+        if (settings.authToken.isNullOrBlank()) login()
     }
 
     private fun login() {
-        val json = JSONObject().apply {
+        val body = JSONObject().apply {
             put("apiKey", settings.apiKey)
             put("apiSecret", settings.apiSecret)
         }.toString()
 
         val request = Request.Builder()
             .url("${settings.apiUrl}/api/DeviceAuths/Login")
-            .post(json.toRequestBody("application/json".toMediaType()))
+            .post(body.toRequestBody("application/json".toMediaType()))
             .build()
 
         val response = http.newCall(request).execute()
-        val body = response.body?.string()
+        val responseBody = response.body?.string()
             ?: throw IllegalStateException("Device login failed — empty response")
 
         if (!response.isSuccessful) {
-            throw IllegalStateException("Device login failed (HTTP ${response.code}): $body")
+            throw IllegalStateException("Device login failed (HTTP ${response.code}): $responseBody")
         }
 
-        val obj = JSONObject(body)
+        val obj = JSONObject(responseBody)
         settings.authToken = obj.getString("token")
         settings.refreshToken = obj.optString("refreshToken").takeIf { it.isNotBlank() }
         Log.d(TAG, "Device login successful")
@@ -89,20 +81,16 @@ class FiscalizeApiClient(private val settings: SettingsStore) {
 
     private fun refreshToken() {
         val rt = settings.refreshToken
-        if (rt.isNullOrBlank()) {
-            login()
-            return
-        }
+        if (rt.isNullOrBlank()) { login(); return }
 
-        val json = JSONObject().apply { put("refreshToken", rt) }.toString()
+        val body = JSONObject().apply { put("refreshToken", rt) }.toString()
         val request = Request.Builder()
-            .url("${settings.apiUrl}/api/DeviceAuths/RefreshToken")
-            .post(json.toRequestBody("application/json".toMediaType()))
+            .url("${settings.apiUrl}/api/auths/RefreshToken")
+            .post(body.toRequestBody("application/json".toMediaType()))
             .build()
 
         val response = http.newCall(request).execute()
         if (!response.isSuccessful) {
-            // Refresh token expired — full login
             settings.authToken = null
             settings.refreshToken = null
             login()
@@ -112,35 +100,48 @@ class FiscalizeApiClient(private val settings: SettingsStore) {
         val obj = JSONObject(response.body!!.string())
         settings.authToken = obj.getString("token")
         settings.refreshToken = obj.optString("refreshToken").takeIf { it.isNotBlank() }
+        Log.d(TAG, "Token refreshed")
     }
 
-    private fun parseFiscalizeResult(json: String): FiscalizeResult {
-        val obj = JSONObject(json)
-        val fiscal = obj.optJSONObject("invoiceFiscalData") ?: obj.optJSONObject("creditNoteFiscalData")
+    private fun parsePrintTextResponse(json: String): FiscalizeResult {
+        val root = JSONObject(json)
 
-        val stampedPdfBase64 = obj.optString("stampedPdf", "")
-        val stampedPdf = if (stampedPdfBase64.isNotBlank())
-            Base64.decode(stampedPdfBase64, Base64.DEFAULT)
-        else null
+        val docType = root.optString("documentType", "Invoice")
+        val doc = root.optJSONObject("invoice") ?: root.optJSONObject("creditNote")
+        val fiscal = doc?.optJSONObject("fiscalData")
+        val pos = root.optJSONObject("printPosition")
 
         val warnings = buildList {
-            val arr = obj.optJSONArray("warnings") ?: return@buildList
+            val arr = root.optJSONArray("warnings") ?: return@buildList
             repeat(arr.length()) { add(arr.getString(it)) }
         }
 
         return FiscalizeResult(
-            documentType = obj.optString("documentType", "Invoice"),
-            stampedPdf = stampedPdf,
-            suggestedFileName = obj.optString("suggestedFileName", "fiscal_document.pdf"),
-            verificationCode = fiscal?.optString("verificationCode"),
-            qrlUrl = fiscal?.optString("qrlUrl"),
-            receiptNumber = fiscal?.optLong("receiptNumber") ?: 0L,
-            globalNumber = fiscal?.optLong("globalNumber") ?: 0L,
-            fiscalDayNumber = fiscal?.optInt("fiscalDayNumber") ?: 0,
-            invoiceDate = fiscal?.optString("invoiceDate"),
-            confidenceScore = obj.optInt("confidenceScore", 100),
+            documentType = docType,
+            docNo = doc?.optString("docNo") ?: "",
+            total = doc?.optDouble("total") ?: 0.0,
+            currency = doc?.optString("currency") ?: "USD",
+
+            verificationCode = fiscal?.optString("verificationCode") ?: "",
+            qrlUrl = fiscal?.optString("qrlUrl") ?: "",
+            receiptNumber = fiscal?.optString("receiptNumber") ?: "",
+            globalNumber = fiscal?.optString("globalNumber") ?: "",
+            fiscalDayNumber = fiscal?.optString("fiscalDayNumber") ?: "",
+            receiptType = fiscal?.optString("receiptType") ?: "",
+
+            stampPosition = pos?.optInt("stampPosition") ?: 1,
+            stampPage = pos?.optInt("stampPage") ?: 0,
+            stampMarginPoints = pos?.optDouble("stampMarginPoints") ?: 15.0,
+            stampMarginTopPoints = pos?.takeIf { it.has("stampMarginTopPoints") }?.optDouble("stampMarginTopPoints"),
+            stampMarginRightPoints = pos?.takeIf { it.has("stampMarginRightPoints") }?.optDouble("stampMarginRightPoints"),
+            stampMarginBottomPoints = pos?.takeIf { it.has("stampMarginBottomPoints") }?.optDouble("stampMarginBottomPoints"),
+            stampMarginLeftPoints = pos?.takeIf { it.has("stampMarginLeftPoints") }?.optDouble("stampMarginLeftPoints"),
+            stampQrSizePoints = pos?.optDouble("stampQrSizePoints") ?: 75.0,
+            paperSize = pos?.optString("paperSize") ?: "A4",
+
+            confidenceScore = root.optDouble("confidenceScore", 100.0).toInt(),
             warnings = warnings,
-            documentId = obj.optLong("documentId", 0L)
+            documentId = doc?.optLong("id") ?: 0L
         )
     }
 

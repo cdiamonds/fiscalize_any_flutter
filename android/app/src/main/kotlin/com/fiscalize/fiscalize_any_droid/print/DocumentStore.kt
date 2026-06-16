@@ -15,25 +15,27 @@ class DocumentStore(private val context: Context) {
     private val docsDir: File
         get() = File(context.getExternalFilesDir(null), "FiscalizeAny").also { it.mkdirs() }
 
-    fun save(result: FiscalizeResult, jobName: String): SavedDocument? {
+    fun save(result: FiscalizeResult, jobName: String, stampedPdf: ByteArray): SavedDocument? {
         return try {
             val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val baseName = sanitize(result.suggestedFileName.removeSuffix(".pdf"))
+            val baseName = sanitize("${result.documentType}_${result.docNo}".ifBlank { jobName })
             val pdfFile = File(docsDir, "${baseName}_$ts.pdf")
             val metaFile = File(docsDir, "${baseName}_$ts.json")
 
-            result.stampedPdf?.let { pdfFile.writeBytes(it) }
+            pdfFile.writeBytes(stampedPdf)
 
             val meta = JSONObject().apply {
                 put("jobName", jobName)
                 put("pdfPath", pdfFile.absolutePath)
                 put("documentType", result.documentType)
-                put("verificationCode", result.verificationCode ?: "")
-                put("qrlUrl", result.qrlUrl ?: "")
+                put("docNo", result.docNo)
+                put("total", result.total)
+                put("currency", result.currency)
+                put("verificationCode", result.verificationCode)
+                put("qrlUrl", result.qrlUrl)
                 put("receiptNumber", result.receiptNumber)
                 put("globalNumber", result.globalNumber)
                 put("fiscalDayNumber", result.fiscalDayNumber)
-                put("invoiceDate", result.invoiceDate ?: "")
                 put("confidenceScore", result.confidenceScore)
                 put("documentId", result.documentId)
                 put("savedAt", ts)
@@ -59,11 +61,13 @@ class DocumentStore(private val context: Context) {
                         "jobName" to obj.optString("jobName"),
                         "pdfPath" to obj.optString("pdfPath"),
                         "documentType" to obj.optString("documentType"),
+                        "docNo" to obj.optString("docNo"),
+                        "total" to obj.optDouble("total"),
+                        "currency" to obj.optString("currency"),
                         "verificationCode" to obj.optString("verificationCode"),
                         "qrlUrl" to obj.optString("qrlUrl"),
-                        "receiptNumber" to obj.optLong("receiptNumber"),
-                        "fiscalDayNumber" to obj.optInt("fiscalDayNumber"),
-                        "invoiceDate" to obj.optString("invoiceDate"),
+                        "receiptNumber" to obj.optString("receiptNumber"),
+                        "fiscalDayNumber" to obj.optString("fiscalDayNumber"),
                         "confidenceScore" to obj.optInt("confidenceScore"),
                         "savedAt" to obj.optString("savedAt"),
                         "warnings" to (0 until (obj.optJSONArray("warnings")?.length() ?: 0))
