@@ -128,7 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _Field(
               controller: _apiUrl,
               label: 'API Base URL',
-              hint: 'https://api.yourfiscalize.com',
+              hint: 'https://fiscalize.onaerp.africa',
               icon: Icons.link_rounded,
               keyboardType: TextInputType.url,
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,

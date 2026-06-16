@@ -19,7 +19,7 @@ class SettingsStore(context: Context) {
     )
 
     var apiUrl: String
-        get() = prefs.getString(KEY_API_URL, "") ?: ""
+        get() = prefs.getString(KEY_API_URL, DEFAULT_API_URL) ?: DEFAULT_API_URL
         set(v) = prefs.edit().putString(KEY_API_URL, v).apply()
 
     var apiKey: String
@@ -94,6 +94,8 @@ class SettingsStore(context: Context) {
         const val KEY_OUTPUT_MODE = "output_mode"
         const val KEY_AUTH_TOKEN = "auth_token"
         const val KEY_REFRESH_TOKEN = "refresh_token"
+
+        const val DEFAULT_API_URL = "https://fiscalize.onaerp.africa"
 
         const val MODE_PRINT_ONLY = "print"
         const val MODE_SAVE_ONLY = "save"
