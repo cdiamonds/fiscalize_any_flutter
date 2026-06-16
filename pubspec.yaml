@@ -1,0 +1,52 @@
+name: fiscalize_any_droid
+description: "FiscalizeAnyDroid — Virtual fiscal printer for Android. Intercepts print jobs, fiscalizes via Fiscalize API, and delivers stamped documents."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Secure storage (writes to Android EncryptedSharedPreferences)
+  flutter_secure_storage: ^9.2.4
+
+  # HTTP (Flutter side for token refresh status checks only)
+  dio: ^5.8.0
+
+  # PDF viewer
+  syncfusion_flutter_pdfviewer: ^28.2.11
+
+  # QR code display
+  qr_flutter: ^4.1.0
+
+  # Share sheet + file saving
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
+  open_filex: ^4.6.0
+
+  # Date formatting
+  intl: ^0.20.2
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.15
+  riverpod_generator: ^2.6.5
+
+flutter:
+  uses-material-design: true
