@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'core/models/fiscal_document.dart';
 import 'core/theme/app_theme.dart';
 import 'features/history/history_screen.dart';
+import 'features/import/import_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/document/document_detail_screen.dart';
 
@@ -78,6 +79,7 @@ class _AppShellState extends State<AppShell> {
               index: _tab,
               children: [
                 HistoryScreen(onOpen: _openDocument, onSettingsTap: _openSettings),
+                const ImportScreen(),
                 const _SetupGuidePage(),
               ],
             ),
@@ -118,7 +120,6 @@ class _SetupGuidePage extends StatelessWidget {
           Spacing.lg + MediaQuery.of(context).padding.bottom,
         ),
         children: [
-          // Hero
           Container(
             padding: const EdgeInsets.all(Spacing.xxl),
             decoration: BoxDecoration(
@@ -142,95 +143,60 @@ class _SetupGuidePage extends StatelessWidget {
                   child: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 28),
                 ),
                 const SizedBox(height: Spacing.lg),
-                Text(
-                  'Fiscalize Any',
-                  style: GoogleFonts.inter(
-                    fontSize: 24, fontWeight: FontWeight.w700,
-                    color: Colors.white, letterSpacing: -0.4,
-                  ),
-                ),
+                Text('Fiscalize Any', style: GoogleFonts.inter(
+                  fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.4,
+                )),
                 const SizedBox(height: 6),
                 Text(
                   'Virtual fiscal printer for Android.\nPrint from any app — we handle ZIMRA.',
-                  style: GoogleFonts.inter(
-                    fontSize: 14, color: Colors.white.withValues(alpha: 0.85), height: 1.5,
-                  ),
+                  style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withValues(alpha: 0.85), height: 1.5),
                 ),
               ],
             ),
           ),
           const SizedBox(height: Spacing.xxl),
-          Text('Get started in 4 steps', style: AppTextStyles.subheading(context)),
+          Text('Virtual Printer — 4 steps', style: AppTextStyles.subheading(context)),
           const SizedBox(height: Spacing.lg),
-          ...steps.asMap().entries.map((e) => _StepCard(
-            index: e.key + 1,
-            icon: e.value.$1,
-            title: e.value.$2,
-            body: e.value.$3,
-          )),
-        ],
-      ),
-    );
-  }
-}
-
-class _StepCard extends StatelessWidget {
-  final int index;
-  final IconData icon;
-  final String title;
-  final String body;
-  const _StepCard({required this.index, required this.icon, required this.title, required this.body});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Spacing.md),
-      child: Container(
-        padding: const EdgeInsets.all(Spacing.lg),
-        decoration: BoxDecoration(
-          color: context.cardColor,
-          borderRadius: BorderRadius.circular(Radii.lg),
-          border: Border.all(color: context.borderColor),
-          boxShadow: AppShadows.card(context),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40, height: 40,
+          ...steps.asMap().entries.map((e) => Padding(
+            padding: const EdgeInsets.only(bottom: Spacing.md),
+            child: Container(
+              padding: const EdgeInsets.all(Spacing.lg),
               decoration: BoxDecoration(
-                color: context.primaryBg,
-                borderRadius: BorderRadius.circular(Radii.md),
+                color: context.cardColor,
+                borderRadius: BorderRadius.circular(Radii.lg),
+                border: Border.all(color: context.borderColor),
+                boxShadow: AppShadows.card(context),
               ),
-              child: Center(
-                child: Text(
-                  '$index',
-                  style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: Spacing.md),
-            Expanded(
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(icon, size: 16, color: AppColors.primary),
-                      const SizedBox(width: 6),
-                      Text(title, style: AppTextStyles.bodyMedium(context)),
-                    ],
+                  Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(color: context.primaryBg, borderRadius: BorderRadius.circular(Radii.md)),
+                    child: Center(child: Text('${e.key + 1}', style: GoogleFonts.inter(
+                      fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primary,
+                    ))),
                   ),
-                  const SizedBox(height: 4),
-                  Text(body, style: AppTextStyles.body(context)),
+                  const SizedBox(width: Spacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Icon(e.value.$1, size: 16, color: AppColors.primary),
+                          const SizedBox(width: 6),
+                          Text(e.value.$2, style: AppTextStyles.bodyMedium(context)),
+                        ]),
+                        const SizedBox(height: 4),
+                        Text(e.value.$3, style: AppTextStyles.body(context)),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
+          )),
+        ],
       ),
     );
   }
@@ -254,8 +220,7 @@ class _BottomNavBarState extends State<_BottomNavBar> with SingleTickerProviderS
   void initState() {
     super.initState();
     _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
+      duration: const Duration(milliseconds: 2000), vsync: this,
     )..repeat(reverse: true);
   }
 
@@ -268,7 +233,7 @@ class _BottomNavBarState extends State<_BottomNavBar> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final isDocsActive = widget.currentIndex == 0;
+    final isImportActive = widget.currentIndex == 1;
 
     return Container(
       height: 80 + bottomPadding,
@@ -287,7 +252,7 @@ class _BottomNavBarState extends State<_BottomNavBar> with SingleTickerProviderS
                   icon: Icons.receipt_long_outlined,
                   activeIcon: Icons.receipt_long_rounded,
                   label: 'Documents',
-                  isActive: isDocsActive,
+                  isActive: widget.currentIndex == 0,
                   onTap: () => widget.onTap(0),
                 )),
                 const Expanded(child: SizedBox()),
@@ -295,39 +260,38 @@ class _BottomNavBarState extends State<_BottomNavBar> with SingleTickerProviderS
                   icon: Icons.help_outline_rounded,
                   activeIcon: Icons.help_rounded,
                   label: 'Setup',
-                  isActive: widget.currentIndex == 1,
-                  onTap: () => widget.onTap(1),
+                  isActive: widget.currentIndex == 2,
+                  onTap: () => widget.onTap(2),
                 )),
               ],
             ),
           ),
-          // Floating print/fiscal button
+          // Floating Import button
           Positioned(
             top: -20, left: 0, right: 0,
             child: Center(
               child: GestureDetector(
                 onTap: () {
                   HapticFeedback.mediumImpact();
-                  widget.onTap(0);
+                  widget.onTap(1);
                 },
                 child: AnimatedBuilder(
                   animation: _pulseController,
                   builder: (_, child) {
-                    final glow = isDocsActive ? 0.0 : 0.08 + _pulseController.value * 0.12;
+                    final glow = isImportActive ? 0.0 : 0.08 + _pulseController.value * 0.12;
                     return Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: [
-                          if (!isDocsActive)
+                          if (!isImportActive)
                             BoxShadow(
                               color: AppColors.primary.withValues(alpha: glow),
                               blurRadius: 20 + _pulseController.value * 10,
                               spreadRadius: 3 + _pulseController.value * 4,
                             ),
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: isDocsActive ? 0.35 : 0.25),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
+                            color: AppColors.primary.withValues(alpha: isImportActive ? 0.35 : 0.25),
+                            blurRadius: 16, offset: const Offset(0, 6),
                           ),
                         ],
                       ),
@@ -348,9 +312,9 @@ class _BottomNavBarState extends State<_BottomNavBar> with SingleTickerProviderS
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 26),
+                        const Icon(Icons.upload_file_rounded, color: Colors.white, size: 26),
                         Text(
-                          'FISCAL',
+                          'IMPORT',
                           style: GoogleFonts.inter(
                             fontSize: 7.5, fontWeight: FontWeight.w800,
                             color: Colors.white.withValues(alpha: 0.9), letterSpacing: 1.2,
@@ -394,19 +358,15 @@ class _NavItem extends StatelessWidget {
           children: [
             AnimatedScale(
               scale: isActive ? 1.0 : 0.85,
-              duration: AppDurations.fast,
-              curve: AppCurves.spring,
+              duration: AppDurations.fast, curve: AppCurves.spring,
               child: Icon(isActive ? activeIcon : icon, color: color, size: 24),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: color,
-              ),
-            ),
+            Text(label, style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+              color: color,
+            )),
             const SizedBox(height: 3),
             AnimatedContainer(
               duration: AppDurations.fast, curve: AppCurves.spring,
